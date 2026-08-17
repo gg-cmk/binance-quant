@@ -33,6 +33,12 @@ func main() {
 	if len(os.Args) > 1 {
 		symbol = os.Args[1]
 	}
+	if len(os.Args) > 2 {
+		// the start year-month, e.g. "2019-09" (the USDT-M perpetual launch)
+		if t, err := time.Parse("2006-01", os.Args[2]); err == nil {
+			from = t
+		}
+	}
 	os.MkdirAll("data", 0o755)
 	months := []string{}
 	for y := from.Year(); y <= to.Year(); y++ {

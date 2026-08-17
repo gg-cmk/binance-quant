@@ -44,6 +44,12 @@ func main() {
 	if len(os.Args) > 3 {
 		market = os.Args[3] // "spot" | "futures"
 	}
+	if len(os.Args) > 4 {
+		// the start year-month, e.g. "2019-09" (the USDT-M perpetual launch)
+		if t, err := time.Parse("2006-01", os.Args[4]); err == nil {
+			from = t
+		}
+	}
 	os.MkdirAll(outDir, 0o755)
 	path := "spot"
 	suffix := ""
