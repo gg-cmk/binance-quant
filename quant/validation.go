@@ -305,6 +305,7 @@ type Validation struct {
 	Expectancy float64
 	Net        float64
 	MaxDD      float64
+	Sharpe     float64
 	MCBetter   int
 	MCProb     float64 // the P(MC ≥ real) — the coincidence probability
 }

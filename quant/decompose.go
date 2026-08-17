@@ -15,6 +15,11 @@ type DecomposeResult struct {
 	KillSuppressed int
 	Flips          int
 	TradeNets      []float64
+	LongPct        float64
+	LongN          int
+	ShortPct       float64
+	ShortN         int
+	StopOuts       int
 }
 
 // Decompose — the same trade loop as Validate, but reports the P&L
@@ -104,12 +109,43 @@ func Decompose(candles []Candle, returns []float64, fd Funding, cost CostModel, 
 				d.KillSuppressed++
 			}
 		}
-		if sig != pos && pos != Flat && i-entered < p.MinHold {
+		// the stop-loss (mirror of Validate): the adverse move beyond StopPct
+		stopHit := false
+		stopExit := 0.0
+		if pos != Flat && p.StopPct > 0 {
+			if pos == Long {
+				stopPrice := entry * (1 - p.StopPct)
+				if testC[i].Low <= stopPrice {
+					stopHit = true
+					stopExit = stopPrice
+					if testC[i].Open < stopPrice {
+						stopExit = testC[i].Open
+					}
+				}
+			} else {
+				stopPrice := entry * (1 + p.StopPct)
+				if testC[i].High >= stopPrice {
+					stopHit = true
+					stopExit = stopPrice
+					if testC[i].Open > stopPrice {
+						stopExit = testC[i].Open
+					}
+				}
+			}
+			if stopHit {
+				sig = Flat
+			}
+		}
+		if sig != pos && pos != Flat && i-entered < p.MinHold && !killFired && !stopHit {
 			sig = pos
 		}
 		if sig != pos {
 			if pos != Flat {
 				exit := testC[i].Open
+				if stopHit {
+					exit = stopExit
+					d.StopOuts++
+				}
 				raw := (exit - entry) / entry
 				if pos == Short {
 					raw = -raw
@@ -121,6 +157,13 @@ func Decompose(candles []Candle, returns []float64, fd Funding, cost CostModel, 
 				closedPct += net * 100
 				d.Closed++
 				d.TradeNets = append(d.TradeNets, net*100)
+				if pos == Long {
+					d.LongPct += net * 100
+					d.LongN++
+				} else {
+					d.ShortPct += net * 100
+					d.ShortN++
+				}
 			}
 			if sig != Flat {
 				entry, entryT = testC[i].Open, testC[i].Time
