@@ -1,7 +1,6 @@
 // ═══ binance-quant — the baseline strategies ═════════════════════════════
 package quant
 
-
 // BuyHold — the sanity baseline: always long at 2x (the market itself).
 type BuyHold struct{}
 
@@ -11,8 +10,10 @@ func (b *BuyHold) Signal(i int, candles []Candle, ctx *StratCtx) Position {
 func (b *BuyHold) Name() string { return "buyhold-2x" }
 
 // MeanRev — the z-score mean reversion (Bollinger-like):
-//   z = (close − SMA) / σ of the window
-//   long when z ≤ −2 (oversold), flat when z ≥ 0
+//
+//	z = (close − SMA) / σ of the window
+//	long when z ≤ −2 (oversold), flat when z ≥ 0
+//
 // The 2x sizing is applied by the engine. The honest expectation for a
 // direction strategy on 15m BTC is a ~50-55% hit rate — the gate decides.
 type MeanRev struct {

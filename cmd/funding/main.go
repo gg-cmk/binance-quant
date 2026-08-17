@@ -4,9 +4,9 @@
 // rate — the backtest must apply it to open positions (the 2x futures
 // design, user 2026-08-17).
 //
-//   https://data.binance.vision/data/futures/um/monthly/fundingRate/{SYMBOL}/{SYMBOL}-fundingRate-{YYYY-MM}.zip
-//   CSV: fundingTime,fundingIntervalHours,fundingRate
-//   fundingTime = the UTC ms of the funding timestamp.
+//	https://data.binance.vision/data/futures/um/monthly/fundingRate/{SYMBOL}/{SYMBOL}-fundingRate-{YYYY-MM}.zip
+//	CSV: fundingTime,fundingIntervalHours,fundingRate
+//	fundingTime = the UTC ms of the funding timestamp.
 package main
 
 import (
