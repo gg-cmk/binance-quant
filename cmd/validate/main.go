@@ -23,7 +23,7 @@ func main() {
 	cost := quant.CostModel{TakerPct: 0.0005, SlippagePct: 0.0008}
 	rets := quant.LogReturns(candles)
 
-	v := quant.Validate(candles, rets, fd, cost, 2.0, 0.6, 200, 42)
+	v := quant.Validate(candles, rets, fd, cost, 2.0, 0.6, 200, 42, quant.DefaultParams())
 	fmt.Printf("═══ WALK-FORWARD (train 60%% / test 40%%) ═══\n")
 	fmt.Printf("trades    %d\n", v.Trades)
 	fmt.Printf("win rate  %.1f%%\n", v.WinRate*100)
