@@ -150,15 +150,25 @@ func ValidateTrend(candles []Candle, returns []float64, fd Funding, cost CostMod
 	v.Trades = len(trades)
 	if len(trades) > 0 {
 		wins, sum := 0, 0.0
+		grossWin, grossLoss := 0.0, 0.0
 		for _, t := range trades {
 			net := t.RetPct*leverage - t.CostPct
 			sum += net
 			if net > 0 {
 				wins++
+				grossWin += net * 100
+			} else {
+				grossLoss += -net * 100
 			}
 		}
 		v.WinRate = float64(wins) / float64(len(trades))
 		v.Expectancy = sum / float64(len(trades))
+		// the profit factor: the gross wins / |gross losses| (inf when no losses)
+		if grossLoss > 0 {
+			v.ProfitFactor = grossWin / grossLoss
+		} else if grossWin > 0 {
+			v.ProfitFactor = 99 // all-win (capped)
+		}
 	}
 	v.Net = (eq[len(eq)-1] - 1) * 100
 	// the Sharpe of the per-bar equity returns (annualized)

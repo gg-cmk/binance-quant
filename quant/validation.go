@@ -299,15 +299,16 @@ func Validate(candles []Candle, returns []float64, fd Funding, cost CostModel, l
 
 // Validation — the gate-oriented report.
 type Validation struct {
-	TrainFrac  float64
-	Trades     int
-	WinRate    float64
-	Expectancy float64
-	Net        float64
-	MaxDD      float64
-	Sharpe     float64
-	MCBetter   int
-	MCProb     float64 // the P(MC ≥ real) — the coincidence probability
+	TrainFrac   float64
+	Trades      int
+	WinRate     float64
+	ProfitFactor float64
+	Expectancy  float64
+	Net         float64
+	MaxDD       float64
+	Sharpe      float64
+	MCBetter    int
+	MCProb      float64 // the P(MC ≥ real) — the coincidence probability
 }
 
 func percentile(v []float64, q float64) float64 {
