@@ -58,7 +58,7 @@ func main() {
 	}
 
 	all := [][]string{}
-	header := []string{"openTime", "open", "high", "low", "close", "volume", "closeTime", "quoteVolume", "trades", "takerBuyBase", "takerBuyQuote"}
+	header := []string{"openTime", "open", "high", "low", "close", "volume", "closeTime", "quoteVolume", "trades", "takerBuyBase", "takerBuyQuote", "ignore"}
 	for _, mon := range months {
 		url := fmt.Sprintf("%s/%s/%s/%s-%s-%s.zip", baseURL, symbol, interval, symbol, interval, mon)
 		rows, err := fetchMonth(url)
