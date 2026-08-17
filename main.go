@@ -19,20 +19,24 @@ import (
 type DataSummary struct {
 	Symbol      string  `json:"symbol"`
 	Interval    string  `json:"interval"`
+	Market      string  `json:"market"`
+	Leverage    int     `json:"leverage"`
 	Rows        int     `json:"rows"`
 	From        string  `json:"from"`
 	To          string  `json:"to"`
 	LatestClose float64 `json:"latestClose"`
 	High24h     float64 `json:"high24h"`
 	Low24h      float64 `json:"low24h"`
+	FundingAvg  float64 `json:"fundingAvgPct"`
+	FundingRows int     `json:"fundingRows"`
 	DataOK      bool    `json:"dataOK"`
 }
 
 func loadSummary() DataSummary {
-	s := DataSummary{Symbol: "BTCUSDT", Interval: "15m"}
+	s := DataSummary{Symbol: "BTCUSDT", Interval: "15m", Market: "futures-um", Leverage: 2}
 	path := os.Getenv("DATA_CSV")
 	if path == "" {
-		path = filepath.Join("data", "BTCUSDT-15m.csv")
+		path = filepath.Join("data", "BTCUSDT-15m-futures.csv") // the 2x perpetual futures (user 2026-08-17)
 	}
 	f, err := os.Open(path)
 	if err != nil {
@@ -79,6 +83,33 @@ func loadSummary() DataSummary {
 		}
 	}
 	s.DataOK = true
+	fp := os.Getenv("FUNDING_CSV")
+	if fp == "" {
+		fp = filepath.Join("data", "BTCUSDT-funding.csv")
+	}
+	if ff, err := os.Open(fp); err == nil {
+		defer ff.Close()
+		fcr := csv.NewReader(ff)
+		sum := 0.0
+		n := 0
+		for {
+			rec, err := fcr.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil || len(rec) < 3 {
+				continue
+			}
+			if v, err := strconv.ParseFloat(rec[2], 64); err == nil {
+				sum += v
+				n++
+			}
+		}
+		if n > 0 {
+			s.FundingAvg = sum / float64(n) * 100
+			s.FundingRows = n
+		}
+	}
 	return s
 }
 
@@ -112,15 +143,16 @@ h1{ font-size:22px; letter-spacing:.5px; }
 .bad{ color:#FF6B6B; } .good{ color:#51CF66; }
 </style></head><body><main>
 <h1>binance-quant</h1>
-<div class="metric"><span>symbol / interval</span><b>%s / %s</b></div>
+<div class="metric"><span>market</span><b>%s · %s / %s · %dx</b></div>
 <div class="metric"><span>rows</span><b>%d</b></div>
 <div class="metric"><span>span</span><b>%s → %s</b></div>
 <div class="metric"><span>latest close</span><b>$%.2f</b></div>
 <div class="metric"><span>24h high / low</span><b>$%.2f / $%.2f</b></div>
+<div class="metric"><span>funding avg (8h)</span><b>%.4f%% · %d rows</b></div>
 <div class="metric"><span>data</span><b class="%s">%s</b></div>
 </main></body></html>`,
-			s.Symbol, s.Interval, s.Rows, s.From, s.To,
-			s.LatestClose, s.High24h, s.Low24h,
+			s.Market, s.Symbol, s.Interval, s.Leverage, s.Rows, s.From, s.To,
+			s.LatestClose, s.High24h, s.Low24h, s.FundingAvg, s.FundingRows,
 			map[bool]string{true: "good", false: "bad"}[s.DataOK],
 			map[bool]string{true: "loaded", false: "missing — run go run ./cmd/fetch"}[s.DataOK])
 	})

@@ -25,11 +25,12 @@ import (
 	"time"
 )
 
-const baseURL = "https://data.binance.vision/data/spot/monthly/klines"
+const baseURL = "https://data.binance.vision/data" // + /spot or /futures/um + /monthly/klines
 
 func main() {
 	symbol := "BTCUSDT"
 	interval := "15m"
+	market := "futures" // the 2x PERPETUAL FUTURES (user 2026-08-17 '2배 선물로 하자') — the USDT-margined futures by default
 	from := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
 	to := time.Now().UTC()
 	outDir := "data"
@@ -40,7 +41,16 @@ func main() {
 	if len(os.Args) > 2 {
 		interval = os.Args[2]
 	}
+	if len(os.Args) > 3 {
+		market = os.Args[3] // "spot" | "futures"
+	}
 	os.MkdirAll(outDir, 0o755)
+	path := "spot"
+	suffix := ""
+	if market == "futures" {
+		path = "futures/um"
+		suffix = "-futures"
+	}
 
 	months := []string{}
 	for y := from.Year(); y <= to.Year(); y++ {
@@ -60,7 +70,7 @@ func main() {
 	all := [][]string{}
 	header := []string{"openTime", "open", "high", "low", "close", "volume", "closeTime", "quoteVolume", "trades", "takerBuyBase", "takerBuyQuote", "ignore"}
 	for _, mon := range months {
-		url := fmt.Sprintf("%s/%s/%s/%s-%s-%s.zip", baseURL, symbol, interval, symbol, interval, mon)
+		url := fmt.Sprintf("%s/%s/monthly/klines/%s/%s/%s-%s-%s.zip", baseURL, path, symbol, interval, symbol, interval, mon)
 		rows, err := fetchMonth(url)
 		if err != nil {
 			fmt.Printf("[skip] %s: %v\n", mon, err)
@@ -84,7 +94,7 @@ func main() {
 		dedup = append(dedup, r)
 	}
 
-	out := filepath.Join(outDir, fmt.Sprintf("%s-%s.csv", symbol, interval))
+	out := filepath.Join(outDir, fmt.Sprintf("%s-%s%s.csv", symbol, interval, suffix))
 	f, err := os.Create(out)
 	if err != nil {
 		fmt.Println("ERR:", err)
@@ -148,6 +158,9 @@ func fetchMonth(url string) ([][]string, error) {
 			}
 			if len(rec) < 6 {
 				continue
+			}
+			if _, err := strconv.ParseInt(rec[0], 10, 64); err != nil {
+				continue // the header row (open_time/...) — the futures monthly CSVs carry it as the first line
 			}
 			// the monthly ZIPs carry openTime/closeTime in MICROSECONDS
 			// (16 digits) — normalize to the millisecond (13) so the CSV is
